@@ -1,11 +1,12 @@
 import cv2
 import dlib
 import glob
+from common import *
 
 PREDICTOR_PATH = "data/shape_predictor_68_face_landmarks.dat"
 predictor = dlib.shape_predictor(PREDICTOR_PATH)
 
-key_points = [36, 39, 27, 42, 45, 48, 51, 54, 8]
+
 frontal_folder = "05_1"
 
 poses_folders = [
@@ -65,4 +66,4 @@ def save_landmarks_to_file(input_path, output_file):
             output.write("%s\n" % (value))
 
 if __name__ == "__main__":
-    save_landmarks_to_file(data_folder, "landmarks.csv")
+    save_landmarks_to_file(data_folder, LANDMAKRS_DATA)
