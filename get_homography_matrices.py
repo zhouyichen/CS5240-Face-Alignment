@@ -25,4 +25,4 @@ def process_file(data_file, output_file):
 		f.close()
 
 if __name__ == "__main__":
-	process_file(LANDMAKRS_DATA, HOMOGRAPHY_DATA)
+	process_file(NUMBER_LM_PRE+LANDMAKRS_DATA, NUMBER_LM_PRE+HOMOGRAPHY_DATA)

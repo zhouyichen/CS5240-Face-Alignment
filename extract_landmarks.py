@@ -67,4 +67,4 @@ def save_landmarks_to_file(input_path, output_file):
             output.write("%s\n" % (value))
 
 if __name__ == "__main__":
-    save_landmarks_to_file(data_folder, LANDMAKRS_DATA)
+    save_landmarks_to_file(data_folder, NUMBER_LM_PRE + LANDMAKRS_DATA)
