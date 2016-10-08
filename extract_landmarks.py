@@ -22,8 +22,7 @@ poses_folders = [
 
 data_folder = 'data/PIE/'
 
-def get_landmarks(image_path):
-    im = cv2.imread(image_path)
+def get_landmarks(im):
     width, height, rgb = im.shape
     rect = dlib.rectangle(0, 0, height, width)
     pre = predictor(im, rect)
@@ -52,14 +51,16 @@ def save_landmarks_to_file(input_path, output_file):
         print person_path
         d = {}
         for image_path in glob.glob(person_path + frontal_folder + "/*.png"):
-            landmarks = covnert_2d_list_to_string(get_landmarks(image_path))
+            im = cv2.imread(image_path)
+            landmarks = covnert_2d_list_to_string(get_landmarks(im))
             image_number = image_path[-6:-4]
             d[image_number] = landmarks
 
         for pose_path in poses_folders:
             pose_folder_path = person_path + pose_path
             for image_path in glob.glob(pose_folder_path + "/*.png"):
-                landmarks = covnert_2d_list_to_string(get_landmarks(image_path))
+                im = cv2.imread(image_path)
+                landmarks = covnert_2d_list_to_string(get_landmarks(im))
                 image_number = image_path[-6:-4]
                 d[image_number] += ',' + landmarks
         for key, value in d.iteritems():

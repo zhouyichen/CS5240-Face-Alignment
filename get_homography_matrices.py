@@ -21,9 +21,6 @@ def process_file(data_file, output_file):
 				output_list = angled_view.tolist() + M.reshape((9)).tolist()[:8]
 				output.write("%s\n" % (",".join([str(i) for i in output_list])))
 
-		# frontal_view = to_np_mat(row[:NUMBER_OF_LANDMARK_PER_FACE * 2])
-		# self.features_list.append([row[0], np.array(row[1:], dtype = np.dtype(float))])
-
 		# close the reader
 		f.close()
 
