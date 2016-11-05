@@ -1,3 +1,5 @@
+import numpy as np
+
 key_points = [36, 39, 42, 45, 48, 54, 8]
 
 NUMBER_OF_POSES = 8
