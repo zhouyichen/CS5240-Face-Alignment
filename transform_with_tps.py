@@ -30,11 +30,25 @@ def test_tps(reference_image, target_image):
 	for index in np.ndindex(width, height):
 		p = apply_tps(index, target_landmarks, w, a)
 
-		p = p.astype(int)
+		x1 = int(p[0])
+		y1 = int(p[1])
+		x2 = int(p[0] + 1)
+		y2 = int(p[1] + 1)
 
-		if p[1] >= height or p[0] >= width or p[1] < 0 or p[0] < 0:
+		# if u not in the source image, just ignore
+		if x2 >= width or y2 >= height or x1 < 0 or y1 < 0:
 			continue
-		result[index[1], index[0]] = reference_image[p[1], p[0]]
+
+		# bilinear interpolation
+		x = p[0]
+		y = p[1]
+		xt = x2 - x
+		yt = y2 - y
+		c1 = xt * reference_image[y1, x1] + (1 - xt) * reference_image[y1, x2]
+		c2 = xt * reference_image[y2, x1] + (1 - xt) * reference_image[y2, x2]
+		c3 = yt * c1 + (1 - yt) * c2
+
+		result[index[1], index[0]] = c3
 
 	result = result.astype('uint8')
 
