@@ -18,10 +18,36 @@ def annotate_landmarks(im, landmarks):
         cv2.circle(im, pos, 3, (0, 255, 255))
     return im
 
+def bilinear_interpolate(p, image):
+	height, width, _ = image.shape
+
+	x1 = int(p[0])
+	y1 = int(p[1])
+	x2 = int(p[0] + 1)
+	y2 = int(p[1] + 1)
+
+	# if u not in the source image, just ignore
+	x1 = max(0, min(x1, width - 1))
+	x2 = max(0, min(x2, width - 1))
+	y1 = max(0, min(y1, height - 1))
+	y2 = max(0, min(y2, height - 1))
+		
+	# bilinear interpolation
+	x = p[0]
+	y = p[1]
+	xt = x2 - x
+	yt = y2 - y
+	c1 = xt * image[y1, x1] + (1 - xt) * image[y1, x2]
+	c2 = xt * image[y2, x1] + (1 - xt) * image[y2, x2]
+	c3 = yt * c1 + (1 - yt) * c2
+
+	return c3
+
 def test_tps(reference_image, target_image):
 	reference_landmarks = get_landmarks(reference_image)
 	target_landmarks = get_landmarks(target_image)
 
+	# print target_landmarks
 	w, a = solve_tps(target_landmarks, reference_landmarks)
 
 	height, width, _ = reference_image.shape
@@ -30,25 +56,9 @@ def test_tps(reference_image, target_image):
 	for index in np.ndindex(width, height):
 		p = apply_tps(index, target_landmarks, w, a)
 
-		x1 = int(p[0])
-		y1 = int(p[1])
-		x2 = int(p[0] + 1)
-		y2 = int(p[1] + 1)
+		color = bilinear_interpolate(p, reference_image)
 
-		# if u not in the source image, just ignore
-		if x2 >= width or y2 >= height or x1 < 0 or y1 < 0:
-			continue
-
-		# bilinear interpolation
-		x = p[0]
-		y = p[1]
-		xt = x2 - x
-		yt = y2 - y
-		c1 = xt * reference_image[y1, x1] + (1 - xt) * reference_image[y1, x2]
-		c2 = xt * reference_image[y2, x1] + (1 - xt) * reference_image[y2, x2]
-		c3 = yt * c1 + (1 - yt) * c2
-
-		result[index[1], index[0]] = c3
+		result[index[1], index[0]] = color
 
 	result = result.astype('uint8')
 
