@@ -53,22 +53,45 @@ def frontalise_with_tps(reference_image, target_landmarks):
 	# print target_landmarks
 	w, a = solve_tps(target_landmarks, reference_landmarks)
 
+	if width % 2:
+		width -= 1
+
 	result = np.zeros((height, width, 3))
 	for index in np.ndindex(width, height):
 		p = apply_tps(index, target_landmarks, w, a)
 		color = bilinear_interpolate(p, reference_image)
 		result[index[1], index[0]] = color
 	
+	left_face = reference_landmarks[1]
+	mid = reference_landmarks[28]
+	right_face = reference_landmarks[15]
+
+	left_dist = np.linalg.norm(left_face - mid)
+	right_dist = np.linalg.norm(right_face - mid)
+
+	r = right_dist / left_dist
+	r = r ** 0.8
+
+	if r < 1: # add left to right
+		result[:,width/2:] = np.fliplr(result[:,:width/2]) * (1 - r) + result[:,width/2:] * r
+	else: # add right to left
+		r = 1 / r
+		result[:,:width/2] = np.fliplr(result[:,width/2:]) * (1 - r) + result[:,:width/2] * r
+
 	# result = annotate_landmarks(result, target_landmarks.astype(int))
 	# reference_image = annotate_landmarks(reference_image, reference_landmarks)
+
+	cv2.imshow('winname', np.hstack((reference_image, result.astype('uint8'))))
+	cv2.waitKey(0)
+
 	return result.astype('uint8')
 
+
 if __name__ == "__main__":
-	ref = cv2.imread('testing/Screen Shot 2016-11-06 at 16.46.51.png')
+	ref = cv2.imread('testing/left.png')
 	tar = cv2.imread(AVRAGE_FACE)
 	target_landmarks = get_landmarks(tar)
 	frontalised = frontalise_with_tps(ref, target_landmarks)
 
-	cv2.imshow('winname', np.hstack((ref, frontalised)))
-	cv2.waitKey(0)
+
 
