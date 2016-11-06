@@ -35,7 +35,7 @@ def solve_tps(reference_points, target_points):
 	b = np.zeros((n+3, 2))
 	b[:n, :] = v
 
-	wa = np.linalg.inv(L).dot(b)
+	wa = np.linalg.pinv(L).dot(b)
 
 	w = wa[:n]
 	a = wa[n:]
