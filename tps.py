@@ -1,5 +1,4 @@
-from common import *
-
+import numpy as np
 
 def U(r):
 	return r * r * np.log10(r + 1e-10)
@@ -22,7 +21,6 @@ def solve_tps(reference_points, target_points):
 		for j in range(n):
 			r = np.linalg.norm(reference_points[i] - reference_points[j])
 			K[i, j] = U(r)
-
 
 	P = np.hstack((reference_points, np.ones((n, 1))))
 	Pt = P.T
@@ -58,6 +56,3 @@ def apply_tps(input_point, reference_points, w, a):
 	change = homo_input_point.dot(a) + weighted_e
 	destination_coord = input_point + change
 	return destination_coord
-
-
-
