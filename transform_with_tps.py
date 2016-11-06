@@ -2,6 +2,12 @@ import cv2
 import dlib
 from tps import apply_tps, solve_tps
 import numpy as np
+import sys
+
+'''
+Example: python transform_with_tps.py path_to_image.png
+'''
+
 
 AVRAGE_FACE = 'symm_average_face.jpg'
 AVERAGE_FACE_SIZE = 200.0
@@ -86,9 +92,8 @@ def frontalise_with_tps(reference_image, target_landmarks):
 
 	return result.astype('uint8')
 
-
 if __name__ == "__main__":
-	ref = cv2.imread('testing/left.png')
+	ref = cv2.imread(sys.argv[1])
 	tar = cv2.imread(AVRAGE_FACE)
 	target_landmarks = get_landmarks(tar)
 	frontalised = frontalise_with_tps(ref, target_landmarks)
