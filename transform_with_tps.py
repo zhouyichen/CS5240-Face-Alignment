@@ -4,12 +4,13 @@ from tps import apply_tps, solve_tps
 from common import *
 
 
-predictor = dlib.shape_predictor(PREDICTOR_PATH)
+landmark_predictor = dlib.shape_predictor(PREDICTOR_PATH)
+face_detector = dlib.get_frontal_face_detector()
 
-def get_landmarks(im):
-    h, w, d = im.shape
-    rect = dlib.rectangle(0, 0, w, h)
-    return np.array([(p.x, p.y) for p in predictor(im, rect).parts()])
+def get_landmarks(img):
+	d = face_detector(img, 1)[0]
+	pre = landmark_predictor(img, d)
+	return np.array([(p.x, p.y) for (i, p) in enumerate(pre.parts())])
 
 def annotate_landmarks(im, landmarks):
     im = im.copy()
