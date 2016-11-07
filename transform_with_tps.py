@@ -66,11 +66,11 @@ def frontalise_with_tps(reference_image, target_landmarks):
 	if width % 2:
 		width -= 1
 
-	result = np.zeros((height, width, 3))
+	frontalised = np.zeros((height, width, 3))
 	for index in np.ndindex(width, height):
 		p = apply_tps(index, target_landmarks, w, a)
 		color = bilinear_interpolate(p, reference_image)
-		result[index[1], index[0]] = color
+		frontalised[index[1], index[0]] = color
 	
 	left_face = reference_landmarks[1]
 	mid = reference_landmarks[28]
@@ -82,19 +82,22 @@ def frontalise_with_tps(reference_image, target_landmarks):
 	r = right_dist / left_dist
 	r = r ** 0.8
 
+	symmetric = np.zeros((height, width, 3))
 	if r < 1: # add left to right
-		result[:,width/2:] = np.fliplr(result[:,:width/2]) * (1 - r) + result[:,width/2:] * r
+		symmetric[:,width/2:] = np.fliplr(frontalised[:,:width/2]) * (1 - r) + frontalised[:,width/2:] * r
+		symmetric[:,:width/2] = frontalised[:,:width/2]
 	else: # add right to left
 		r = 1 / r
-		result[:,:width/2] = np.fliplr(result[:,width/2:]) * (1 - r) + result[:,:width/2] * r
+		symmetric[:,:width/2] = np.fliplr(frontalised[:,width/2:]) * (1 - r) + frontalised[:,:width/2] * r
+		symmetric[:,width/2:] = frontalised[:,width/2:]
 
-	# result = annotate_landmarks(result, target_landmarks.astype(int))
+	# frontalised = annotate_landmarks(frontalised, target_landmarks.astype(int))
 	# reference_image = annotate_landmarks(reference_image, reference_landmarks)
 
-	cv2.imshow('winname', np.hstack((reference_image, result.astype('uint8'))))
+	cv2.imshow('winname', np.hstack((reference_image, symmetric.astype('uint8'))))
 	cv2.waitKey(0)
 
-	return result.astype('uint8')
+	return symmetric.astype('uint8')
 
 if __name__ == "__main__":
 	ref = cv2.imread(sys.argv[1])
