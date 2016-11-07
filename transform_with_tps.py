@@ -54,6 +54,27 @@ def bilinear_interpolate(p, image):
 	c2 = xt * image[y2, x1] + (1 - xt) * image[y2, x2]
 	return yt * c1 + (1 - yt) * c2
 
+def draw_convex_hull(img, points, color):
+	points = cv2.convexHull(points.astype(int))
+	cv2.fillConvexPoly(img, points, color=color)
+
+def create_mask(height, width, landmarks):
+	blur_amount = 11
+
+	mask = np.zeros((height, width))
+
+	# LEFT_EYE_POINTS = list(range(42, 48))
+	# RIGHT_EYE_POINTS = list(range(36, 42))
+	face_indexes = list(range(0, 27))
+	draw_convex_hull(mask, landmarks[face_indexes], 1)
+
+	mask = np.array([mask, mask, mask]).transpose((1, 2, 0))
+
+	mask = (cv2.GaussianBlur(mask, (blur_amount, blur_amount), 0) > 0) * 1.0
+	mask = cv2.GaussianBlur(mask, (blur_amount, blur_amount), 0)
+	return mask
+
+
 def frontalise_with_tps(reference_image, target_landmarks):
 	reference_landmarks = get_landmarks(reference_image)
 	height, width, _ = reference_image.shape
@@ -94,10 +115,14 @@ def frontalise_with_tps(reference_image, target_landmarks):
 	# frontalised = annotate_landmarks(frontalised, target_landmarks.astype(int))
 	# reference_image = annotate_landmarks(reference_image, reference_landmarks)
 
-	cv2.imshow('winname', np.hstack((reference_image, symmetric.astype('uint8'))))
+	face_mask = create_mask(height, width, target_landmarks)
+	final_result = face_mask * symmetric + (1 - face_mask) * frontalised
+
+
+	cv2.imshow('winname', np.hstack((reference_image, final_result.astype('uint8'))))
 	cv2.waitKey(0)
 
-	return symmetric.astype('uint8')
+	return final_result.astype('uint8')
 
 if __name__ == "__main__":
 	ref = cv2.imread(sys.argv[1])
