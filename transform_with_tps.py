@@ -19,7 +19,10 @@ face_detector = dlib.get_frontal_face_detector()
 def get_landmarks(img):
 	d = face_detector(img, 1)[0]
 	pre = landmark_predictor(img, d)
-	return np.array([(p.x, p.y) for (i, p) in enumerate(pre.parts())])
+	def include(index):
+		# exclude mouth details
+		return index < 48
+	return np.array([(p.x, p.y) for (i, p) in enumerate(pre.parts()) if include(i)])
 
 def annotate_landmarks(image, landmarks):
 	img = image.copy()
