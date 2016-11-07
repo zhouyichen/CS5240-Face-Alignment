@@ -133,7 +133,6 @@ def frontalise_with_tps(reference_image, target_landmarks):
 	face_mask = create_mask(height, width, target_landmarks)
 	final_result = face_mask * symmetric + (1 - face_mask) * frontalised
 
-
 	cv2.imshow('winname', np.hstack((reference_image, final_result.astype('uint8'))))
 	cv2.waitKey(0)
 
@@ -141,8 +140,12 @@ def frontalise_with_tps(reference_image, target_landmarks):
 
 if __name__ == "__main__":
 	ref = cv2.imread(sys.argv[1])
-	tar = cv2.imread(AVRAGE_FACE)
-	target_landmarks = get_landmarks(tar)
+	try:
+		target_landmarks = np.load('average_frontal.npy')
+	except Exception:
+		tar = cv2.imread(AVRAGE_FACE)
+		target_landmarks = get_landmarks(tar)
+		np.save('average_frontal.npy', target_landmarks)
 	frontalised = frontalise_with_tps(ref, target_landmarks)
 
 
