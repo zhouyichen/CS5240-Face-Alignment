@@ -58,6 +58,7 @@ def frontalise_with_tps(reference_image, target_landmarks):
 	reference_landmarks = get_landmarks(reference_image)
 	height, width, _ = reference_image.shape
 	target_landmarks = target_landmarks * (min(height, width) / AVERAGE_FACE_SIZE)
+	target_landmarks[:, 1] += height / 2 - target_landmarks[30][1]
 
 	# print target_landmarks
 	w, a = solve_tps(target_landmarks, reference_landmarks)
