@@ -61,18 +61,33 @@ def draw_convex_hull(img, points, color):
 def create_mask(height, width, landmarks):
 	blur_amount = 11
 
-	mask = np.zeros((height, width))
+	# include face only
+	face_mask = np.zeros((height, width))
 
-	# LEFT_EYE_POINTS = list(range(42, 48))
-	# RIGHT_EYE_POINTS = list(range(36, 42))
 	face_indexes = list(range(0, 27))
-	draw_convex_hull(mask, landmarks[face_indexes], 1)
 
-	mask = np.array([mask, mask, mask]).transpose((1, 2, 0))
+	draw_convex_hull(face_mask, landmarks[face_indexes], 1)
 
-	mask = (cv2.GaussianBlur(mask, (blur_amount, blur_amount), 0) > 0) * 1.0
-	mask = cv2.GaussianBlur(mask, (blur_amount, blur_amount), 0)
-	return mask
+	face_mask = np.array([face_mask, face_mask, face_mask]).transpose((1, 2, 0))
+
+	face_mask = (cv2.GaussianBlur(face_mask, (blur_amount, blur_amount), 0) > 0) * 1.0
+	face_mask = cv2.GaussianBlur(face_mask, (blur_amount, blur_amount), 0)
+
+	# exclude eyes when do symmetry
+	eyes_mask = np.zeros((height, width))
+
+	left_eye_indexes = list(range(42, 48))
+	right_eye_indexes = list(range(36, 42))
+
+	draw_convex_hull(eyes_mask, landmarks[left_eye_indexes], 1)
+	draw_convex_hull(eyes_mask, landmarks[right_eye_indexes], 1)
+
+	eyes_mask = np.array([eyes_mask, eyes_mask, eyes_mask]).transpose((1, 2, 0))
+
+	eyes_mask = (cv2.GaussianBlur(eyes_mask, (blur_amount, blur_amount), 0) > 0) * 1.0
+	eyes_mask = cv2.GaussianBlur(eyes_mask, (blur_amount, blur_amount), 0)
+
+	return face_mask - eyes_mask
 
 
 def frontalise_with_tps(reference_image, target_landmarks):
