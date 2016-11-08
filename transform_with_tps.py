@@ -116,7 +116,7 @@ def frontalise_with_tps(reference_image, target_landmarks):
 	right_dist = np.linalg.norm(right_face - mid)
 
 	r = right_dist / left_dist
-	r = r ** 0.8
+	r = r ** 1.2
 
 	symmetric = np.zeros((height, width, 3))
 	if r < 1: # add left to right
