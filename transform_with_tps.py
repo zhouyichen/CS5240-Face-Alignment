@@ -56,9 +56,8 @@ def draw_convex_hull(img, points, color):
 	cv2.fillConvexPoly(img, points, color=color)
 
 def create_mask(height, width, landmarks):
-	blur_amount = 11
-
 	# include face only
+	face_blur = 15
 	face_mask = np.zeros((height, width))
 
 	face_indexes = list(range(0, 27))
@@ -67,10 +66,11 @@ def create_mask(height, width, landmarks):
 
 	face_mask = np.array([face_mask, face_mask, face_mask]).transpose((1, 2, 0))
 
-	face_mask = (cv2.GaussianBlur(face_mask, (blur_amount, blur_amount), 0) > 0) * 1.0
-	face_mask = cv2.GaussianBlur(face_mask, (blur_amount, blur_amount), 0)
+	face_mask = (cv2.GaussianBlur(face_mask, (face_blur, face_blur), 0) > 0) * 1.0
+	face_mask = cv2.GaussianBlur(face_mask, (face_blur, face_blur), 0)
 
 	# exclude eyes when do symmetry
+	eyes_blur = 11
 	eyes_mask = np.zeros((height, width))
 
 	left_eye_indexes = list(range(42, 48))
@@ -81,8 +81,8 @@ def create_mask(height, width, landmarks):
 
 	eyes_mask = np.array([eyes_mask, eyes_mask, eyes_mask]).transpose((1, 2, 0))
 
-	eyes_mask = (cv2.GaussianBlur(eyes_mask, (blur_amount, blur_amount), 0) > 0) * 1.0
-	eyes_mask = cv2.GaussianBlur(eyes_mask, (blur_amount, blur_amount), 0)
+	eyes_mask = (cv2.GaussianBlur(eyes_mask, (eyes_blur, eyes_blur), 0) > 0) * 1.0
+	eyes_mask = cv2.GaussianBlur(eyes_mask, (eyes_blur, eyes_blur), 0)
 
 	return face_mask - eyes_mask
 
