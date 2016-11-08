@@ -19,10 +19,7 @@ face_detector = dlib.get_frontal_face_detector()
 def get_landmarks(img):
 	d = face_detector(img, 1)[0]
 	pre = landmark_predictor(img, d)
-	def include(index):
-		# exclude mouth details
-		return index < 48
-	return np.array([(p.x, p.y) for (i, p) in enumerate(pre.parts()) if include(i)])
+	return np.array([(p.x, p.y) for (i, p) in enumerate(pre.parts())])
 
 def annotate_landmarks(image, landmarks):
 	img = image.copy()
@@ -89,22 +86,34 @@ def create_mask(height, width, landmarks):
 
 	return face_mask - eyes_mask
 
+def filter_for_tps(landmarks):
+	result = []
+	for (i, p) in enumerate(landmarks):
+		if i < 17:
+			result.append(p)
+		if i in (17, 26, 27, 33, 36, 39, 42, 45):
+			result.append(p)
+	return np.array(result)
+
 
 def frontalise_with_tps(reference_image, target_landmarks):
 	reference_landmarks = get_landmarks(reference_image)
 	height, width, _ = reference_image.shape
-	target_landmarks = target_landmarks * (min(height, width) / AVERAGE_FACE_SIZE)
+	target_landmarks = target_landmarks * (min(height, width) / AVERAGE_FACE_SIZE) * 0.9
 	target_landmarks[:, 1] += height / 2 - target_landmarks[30][1]
+	target_landmarks[:, 0] += width / 2 - target_landmarks[30][0]
 
 	# print target_landmarks
-	w, a = solve_tps(target_landmarks, reference_landmarks)
+	target_for_tps = filter_for_tps(target_landmarks)
+	reference_for_tps = filter_for_tps(reference_landmarks)
+	w, a = solve_tps(target_for_tps, reference_for_tps)
 
 	if width % 2:
 		width -= 1
 
 	frontalised = np.zeros((height, width, 3))
 	for index in np.ndindex(width, height):
-		p = apply_tps(index, target_landmarks, w, a)
+		p = apply_tps(index, target_for_tps, w, a)
 		color = bilinear_interpolate(p, reference_image)
 		frontalised[index[1], index[0]] = color
 	
