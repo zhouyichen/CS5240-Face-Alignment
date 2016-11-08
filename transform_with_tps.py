@@ -92,26 +92,44 @@ def create_mask(height, width, landmarks):
 
 	return face_mask - eyes_mask
 
-def filter_for_tps(landmarks):
+def filter_for_tps(landmarks, average=True):
 	result = []
+	keypoints = ()
+	if average:
+		keypoints = (0, 2, 4, 8, 12, 14, 16, 17, 26, 27, 33, 36, 39, 42, 45)
+	else:
+		keypoints = (8, 27, 36, 45)
 	for (i, p) in enumerate(landmarks):
-		if i < 17:
-			result.append(p)
-		if i in (17, 26, 27, 33, 36, 39, 42, 45):
+		if i in keypoints:
 			result.append(p)
 	return np.array(result)
 
-
 def frontalise_with_tps(reference_image, target_landmarks):
 	reference_landmarks = get_landmarks(reference_image)
+
+	left_face = reference_landmarks[1]
+	mid = reference_landmarks[28]
+	right_face = reference_landmarks[15]
+
+	left_dist = np.linalg.norm(left_face - mid)
+	right_dist = np.linalg.norm(right_face - mid)
+
 	height, width, _ = reference_image.shape
 	target_landmarks = target_landmarks * (min(height, width) / AVERAGE_FACE_SIZE)
-	target_landmarks[:, 1] += height / 2 - target_landmarks[30][1] - 5
+	target_landmarks[:, 1] += height / 2 - target_landmarks[33][1]
 	target_landmarks[:, 0] += width / 2 - target_landmarks[30][0]
 
+	r = right_dist / left_dist
+	if abs(r - 1) < 0.15:
+		target_for_tps = filter_for_tps(target_landmarks, average=False)
+		reference_for_tps = filter_for_tps(reference_landmarks, average=False)
+	else:
+		target_for_tps = filter_for_tps(target_landmarks)
+		reference_for_tps = filter_for_tps(reference_landmarks)
+	
+	r = r ** 1.2
 	# print target_landmarks
-	target_for_tps = filter_for_tps(target_landmarks)
-	reference_for_tps = filter_for_tps(reference_landmarks)
+
 	w, a = solve_tps(target_for_tps, reference_for_tps)
 
 	if width % 2:
@@ -123,16 +141,6 @@ def frontalise_with_tps(reference_image, target_landmarks):
 		color = bilinear_interpolate(p, reference_image)
 		frontalised[index[1], index[0]] = color
 	
-	left_face = reference_landmarks[1]
-	mid = reference_landmarks[28]
-	right_face = reference_landmarks[15]
-
-	left_dist = np.linalg.norm(left_face - mid)
-	right_dist = np.linalg.norm(right_face - mid)
-
-	r = right_dist / left_dist
-	r = r ** 1.2
-
 	symmetric = np.zeros((height, width, 3))
 	if r < 1: # add left to right
 		symmetric[:,width/2:] = np.fliplr(frontalised[:,:width/2]) * (1 - r) + frontalised[:,width/2:] * r
