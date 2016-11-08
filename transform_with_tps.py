@@ -57,16 +57,22 @@ def draw_convex_hull(img, points, color):
 
 def create_mask(height, width, landmarks):
 	# include face only
-	face_blur = 15
+	face_blur = 11
 	face_mask = np.zeros((height, width))
 
-	face_indexes = list(range(0, 27))
+	face_indexes = list(range(0, 17))
 
-	draw_convex_hull(face_mask, landmarks[face_indexes], 1)
+	face_landmarks = landmarks[face_indexes]
+
+	p1 = 2 * landmarks[17] - landmarks[1]
+	p2 = 2 * landmarks[26] - landmarks[15]
+	face_landmarks = np.append(face_landmarks, [p1, p2], axis=0)
+
+	draw_convex_hull(face_mask, face_landmarks, 1)
 
 	face_mask = np.array([face_mask, face_mask, face_mask]).transpose((1, 2, 0))
 
-	face_mask = (cv2.GaussianBlur(face_mask, (face_blur, face_blur), 0) > 0) * 1.0
+	# face_mask = (cv2.GaussianBlur(face_mask, (face_blur, face_blur), 0) > 0) * 1.0
 	face_mask = cv2.GaussianBlur(face_mask, (face_blur, face_blur), 0)
 
 	# exclude eyes when do symmetry
@@ -99,8 +105,8 @@ def filter_for_tps(landmarks):
 def frontalise_with_tps(reference_image, target_landmarks):
 	reference_landmarks = get_landmarks(reference_image)
 	height, width, _ = reference_image.shape
-	target_landmarks = target_landmarks * (min(height, width) / AVERAGE_FACE_SIZE) * 0.9
-	target_landmarks[:, 1] += height / 2 - target_landmarks[30][1]
+	target_landmarks = target_landmarks * (min(height, width) / AVERAGE_FACE_SIZE)
+	target_landmarks[:, 1] += height / 2 - target_landmarks[30][1] - 5
 	target_landmarks[:, 0] += width / 2 - target_landmarks[30][0]
 
 	# print target_landmarks
@@ -136,11 +142,12 @@ def frontalise_with_tps(reference_image, target_landmarks):
 		symmetric[:,:width/2] = np.fliplr(frontalised[:,width/2:]) * (1 - r) + frontalised[:,:width/2] * r
 		symmetric[:,width/2:] = frontalised[:,width/2:]
 
-	# frontalised = annotate_landmarks(frontalised, target_landmarks.astype(int))
 	# reference_image = annotate_landmarks(reference_image, reference_landmarks)
 
 	face_mask = create_mask(height, width, target_landmarks)
 	final_result = face_mask * symmetric + (1 - face_mask) * frontalised
+
+	# final_result = annotate_landmarks(final_result, target_landmarks.astype(int))
 
 	cv2.imshow('winname', np.hstack((reference_image, final_result.astype('uint8'))))
 	cv2.waitKey(0)
@@ -156,6 +163,4 @@ if __name__ == "__main__":
 		target_landmarks = get_landmarks(tar)
 		np.save('average_frontal.npy', target_landmarks)
 	frontalised = frontalise_with_tps(ref, target_landmarks)
-
-
 
