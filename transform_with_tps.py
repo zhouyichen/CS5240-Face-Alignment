@@ -8,7 +8,6 @@ import sys
 Example: python transform_with_tps.py path_to_image.png
 '''
 
-
 AVRAGE_FACE = 'symm_average_face.jpg'
 AVERAGE_FACE_SIZE = 200.0
 
@@ -104,41 +103,41 @@ def filter_for_tps(landmarks, average=True):
 			result.append(p)
 	return np.array(result)
 
-def frontalise_with_tps(reference_image, target_landmarks):
-	reference_landmarks = get_landmarks(reference_image)
+def frontalise_with_tps(target_image, reference_landmarks):
+	target_landmarks = get_landmarks(target_image)
 
-	left_face = reference_landmarks[1]
-	mid = reference_landmarks[28]
-	right_face = reference_landmarks[15]
+	left_face = target_landmarks[1]
+	mid = target_landmarks[28]
+	right_face = target_landmarks[15]
 
 	left_dist = np.linalg.norm(left_face - mid)
 	right_dist = np.linalg.norm(right_face - mid)
 
-	height, width, _ = reference_image.shape
-	target_landmarks = target_landmarks * (min(height, width) / AVERAGE_FACE_SIZE)
-	target_landmarks[:, 1] += height / 2 - target_landmarks[33][1]
-	target_landmarks[:, 0] += width / 2 - target_landmarks[30][0]
+	height, width, _ = target_image.shape
+	reference_landmarks = reference_landmarks * (min(height, width) / AVERAGE_FACE_SIZE)
+	reference_landmarks[:, 1] += height / 2 - reference_landmarks[33][1]
+	reference_landmarks[:, 0] += width / 2 - reference_landmarks[30][0]
 
 	r = right_dist / left_dist
-	if abs(r - 1) < 0.15:
-		target_for_tps = filter_for_tps(target_landmarks, average=False)
+	if abs(r - 1) < 0.2:
 		reference_for_tps = filter_for_tps(reference_landmarks, average=False)
+		target_for_tps = filter_for_tps(target_landmarks, average=False)
 	else:
-		target_for_tps = filter_for_tps(target_landmarks)
 		reference_for_tps = filter_for_tps(reference_landmarks)
+		target_for_tps = filter_for_tps(target_landmarks)
 	
 	r = r ** 1.2
-	# print target_landmarks
+	# print reference_landmarks
 
-	w, a = solve_tps(target_for_tps, reference_for_tps)
+	w, a = solve_tps(reference_for_tps, target_for_tps)
 
 	if width % 2:
 		width -= 1
 
 	frontalised = np.zeros((height, width, 3))
 	for index in np.ndindex(width, height):
-		p = apply_tps(index, target_for_tps, w, a)
-		color = bilinear_interpolate(p, reference_image)
+		p = apply_tps(index, reference_for_tps, w, a)
+		color = bilinear_interpolate(p, target_image)
 		frontalised[index[1], index[0]] = color
 	
 	symmetric = np.zeros((height, width, 3))
@@ -150,25 +149,25 @@ def frontalise_with_tps(reference_image, target_landmarks):
 		symmetric[:,:width/2] = np.fliplr(frontalised[:,width/2:]) * (1 - r) + frontalised[:,:width/2] * r
 		symmetric[:,width/2:] = frontalised[:,width/2:]
 
-	# reference_image = annotate_landmarks(reference_image, reference_landmarks)
+	# target_image = annotate_landmarks(target_image, target_landmarks)
 
-	face_mask = create_mask(height, width, target_landmarks)
+	face_mask = create_mask(height, width, reference_landmarks)
 	final_result = face_mask * symmetric + (1 - face_mask) * frontalised
 
-	# final_result = annotate_landmarks(final_result, target_landmarks.astype(int))
+	# final_result = annotate_landmarks(final_result, reference_landmarks.astype(int))
 
-	cv2.imshow('winname', np.hstack((reference_image, final_result.astype('uint8'))))
+	cv2.imshow('winname', np.hstack((target_image, final_result.astype('uint8'))))
 	cv2.waitKey(0)
 
 	return final_result.astype('uint8')
 
 if __name__ == "__main__":
-	ref = cv2.imread(sys.argv[1])
+	target = cv2.imread(sys.argv[1])
 	try:
-		target_landmarks = np.load('average_frontal.npy')
+		reference_landmarks = np.load('average_frontal.npy')
 	except Exception:
-		tar = cv2.imread(AVRAGE_FACE)
-		target_landmarks = get_landmarks(tar)
-		np.save('average_frontal.npy', target_landmarks)
-	frontalised = frontalise_with_tps(ref, target_landmarks)
+		ref = cv2.imread(AVRAGE_FACE)
+		reference_landmarks = get_landmarks(ref)
+		np.save('average_frontal.npy', reference_landmarks)
+	frontalised = frontalise_with_tps(target, reference_landmarks)
 
