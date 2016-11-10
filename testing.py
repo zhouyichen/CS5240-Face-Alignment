@@ -4,6 +4,7 @@ import numpy as np
 import sys
 from transform_with_tps import frontalise_with_tps
 from landmarks import get_landmarks, annotate_landmarks
+import matplotlib.pyplot as plt
 
 frontal_folder = "05_1"
 data_folder = 'data/PIE/'
@@ -87,9 +88,34 @@ def do_testing_on_dataset(input_dataset_path, reference_landmarks):
 					errors[p, lightings.index(lighting)] += error
 	return errors / total_number_of_people
 
+def plot_table(errors):
+	cameras = ["L_67.5+", "L_67.5", "L_45", "L_22.5", "R_22.5", "R_45", "R_67.5", "R_67.5+"]
+	lights = ["R_45", "R_22.5", "center", "L_22.5", "L_45"]
+	cell_text = []
+	for row in range(8):
+	    cell_text.append(['%1.1f' % (x) for x in errors[row]])
+
+	fig, axs =plt.subplots(2,1)
+
+	axs[0].axis('tight')
+	axs[0].axis('off')
+	the_table = axs[0].table(
+		rowLabels = cameras,
+		colLabels = lights,
+		cellText = cell_text,
+		loc='center'
+	)
+
+	plt.show()
+
+	return
+
+
 if __name__ == "__main__":
-	reference_landmarks = np.load('average_frontal.npy')
-	mean_squared_errors = do_testing_on_dataset(data_folder, reference_landmarks)
-	print mean_squared_errors
-	np.save('mean_squared_error.npy', mean_squared_errors)
+	# reference_landmarks = np.load('average_frontal.npy')
+	# mean_squared_errors = do_testing_on_dataset(data_folder, reference_landmarks)
+	# print mean_squared_errors
+	# np.save('mean_squared_error.npy', mean_squared_errors)
+	errors = np.load('mean_squared_error.npy')
+	plot_table(errors)
 
