@@ -1,6 +1,6 @@
 import cv2
-import dlib
 from tps import apply_tps, solve_tps
+from landmarks import get_landmarks, annotate_landmarks
 import numpy as np
 import sys
 
@@ -11,21 +11,6 @@ Example: python transform_with_tps.py path_to_image.png
 AVRAGE_FACE = 'symm_average_face.jpg'
 AVERAGE_FACE_SIZE = 200.0
 
-PREDICTOR_PATH = "data/shape_predictor_68_face_landmarks.dat"
-landmark_predictor = dlib.shape_predictor(PREDICTOR_PATH)
-face_detector = dlib.get_frontal_face_detector()
-
-def get_landmarks(img):
-	d = face_detector(img, 1)[0]
-	pre = landmark_predictor(img, d)
-	return np.array([(p.x, p.y) for (i, p) in enumerate(pre.parts())])
-
-def annotate_landmarks(image, landmarks):
-	img = image.copy()
-	for idx, point in enumerate(landmarks):
-		pos = (point[0], point[1])
-		cv2.circle(img, pos, 3, (0, 255, 255))
-	return img
 
 def bilinear_interpolate(p, image):
 	height, width, _ = image.shape
@@ -103,7 +88,7 @@ def filter_for_tps(landmarks, average=True):
 			result.append(p)
 	return np.array(result)
 
-def frontalise_with_tps(target_image, reference_landmarks):
+def frontalise_with_tps(target_image, reference_landmarks, show_result=False):
 	target_landmarks = get_landmarks(target_image)
 
 	left_face = target_landmarks[1]
@@ -149,15 +134,15 @@ def frontalise_with_tps(target_image, reference_landmarks):
 		symmetric[:,:width/2] = np.fliplr(frontalised[:,width/2:]) * (1 - r) + frontalised[:,:width/2] * r
 		symmetric[:,width/2:] = frontalised[:,width/2:]
 
-	# target_image = annotate_landmarks(target_image, target_landmarks)
-
 	face_mask = create_mask(height, width, reference_landmarks)
 	final_result = face_mask * symmetric + (1 - face_mask) * frontalised
 
-	# final_result = annotate_landmarks(final_result, reference_landmarks.astype(int))
+	if show_result:
+		# target_image = annotate_landmarks(target_image, target_landmarks)
+		final_result = annotate_landmarks(final_result, reference_landmarks.astype(int))
 
-	cv2.imshow('winname', np.hstack((target_image, final_result.astype('uint8'))))
-	cv2.waitKey(0)
+		cv2.imshow('winname', np.hstack((target_image, final_result.astype('uint8'))))
+		cv2.waitKey(0)
 
 	return final_result.astype('uint8')
 
@@ -169,5 +154,5 @@ if __name__ == "__main__":
 		ref = cv2.imread(AVRAGE_FACE)
 		reference_landmarks = get_landmarks(ref)
 		np.save('average_frontal.npy', reference_landmarks)
-	frontalised = frontalise_with_tps(target, reference_landmarks)
+	frontalised = frontalise_with_tps(target, reference_landmarks, True)
 
