@@ -88,8 +88,8 @@ def filter_for_tps(landmarks, average=True):
 			result.append(p)
 	return np.array(result)
 
-def frontalise_with_tps(target_image, reference_landmarks, show_result=False):
-	target_landmarks = get_landmarks(target_image)
+def frontalise_with_tps(target_image, reference_landmarks, face_image=False, show_result=False):
+	target_landmarks = get_landmarks(target_image, face_image)
 
 	left_face = target_landmarks[1]
 	mid = target_landmarks[28]
@@ -154,5 +154,5 @@ if __name__ == "__main__":
 		ref = cv2.imread(AVRAGE_FACE)
 		reference_landmarks = get_landmarks(ref)
 		np.save('average_frontal.npy', reference_landmarks)
-	frontalised = frontalise_with_tps(target, reference_landmarks, True)
+	frontalised = frontalise_with_tps(target, reference_landmarks, face_image=False, show_result=True)
 
