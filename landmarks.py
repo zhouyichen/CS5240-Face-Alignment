@@ -7,8 +7,14 @@ PREDICTOR_PATH = "data/shape_predictor_68_face_landmarks.dat"
 landmark_predictor = dlib.shape_predictor(PREDICTOR_PATH)
 
 def get_landmarks(img, face_image=False):
-	d = face_detector(img, 1)[0]
-	pre = landmark_predictor(img, d)
+	pre = None
+	if face_image:
+	    height, width, d = img.shape
+	    rect = dlib.rectangle(0, 0, width, height)
+	    pre = landmark_predictor(img, rect)
+	else:
+		d = face_detector(img, 1)[0]
+		pre = landmark_predictor(img, d)
 	return np.array([(p.x, p.y) for (i, p) in enumerate(pre.parts())])
 
 def annotate_landmarks(image, landmarks):
