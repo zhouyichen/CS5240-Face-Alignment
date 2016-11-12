@@ -17,9 +17,9 @@ def get_landmarks(img, face_image=False):
 		pre = landmark_predictor(img, d)
 	return np.array([(p.x, p.y) for (i, p) in enumerate(pre.parts())])
 
-def annotate_landmarks(image, landmarks):
+def annotate_landmarks(image, landmarks, color=(0, 255, 255)):
 	img = image.copy()
 	for idx, point in enumerate(landmarks):
 		pos = (point[0], point[1])
-		cv2.circle(img, pos, 3, (0, 255, 255))
+		cv2.circle(img, pos, 3, color)
 	return img
