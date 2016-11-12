@@ -104,7 +104,7 @@ def frontalise_with_tps(target_image, reference_landmarks, face_image=False, sho
 	reference_landmarks[:, 0] += width / 2 - reference_landmarks[30][0]
 
 	r = right_dist / left_dist
-	if abs(r - 1) < 0.8:
+	if r > 1.8 or r < 1 / 1.8:
 		reference_for_tps = filter_for_tps(reference_landmarks, average=False)
 		target_for_tps = filter_for_tps(target_landmarks, average=False)
 	else:
